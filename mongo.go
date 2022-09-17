@@ -1,9 +1,8 @@
-package mongo
+package outbox
 
 import (
 	"context"
 
-	"github.com/guil95/outbox"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -12,11 +11,11 @@ type mongoStorage struct {
 	db *mongo.Database
 }
 
-func NewMongoStorage(db *mongo.Database) outbox.Storage {
+func NewMongoStorage(db *mongo.Database) Storage {
 	return &mongoStorage{db}
 }
 
-func (m mongoStorage) ListAllItems(ctx context.Context) ([]outbox.Model, error) {
+func (m mongoStorage) ListAllItems(ctx context.Context) ([]Model, error) {
 	cursor, err := m.db.Collection("outbox").
 		Find(ctx, bson.D{{"produced", false}})
 
@@ -24,7 +23,7 @@ func (m mongoStorage) ListAllItems(ctx context.Context) ([]outbox.Model, error) 
 		return nil, err
 	}
 
-	var items []outbox.Model
+	var items []Model
 	if err = cursor.All(ctx, &items); err != nil {
 		return nil, err
 	}
@@ -57,7 +56,7 @@ func (m mongoStorage) DeleteCheckedItems(ctx context.Context) error {
 	return err
 }
 
-func (m mongoStorage) SaveItem(ctx context.Context, item outbox.Model) error {
+func (m mongoStorage) SaveItem(ctx context.Context, item Model) error {
 	_, err := m.db.Collection("outbox").InsertOne(ctx, item)
 
 	return err

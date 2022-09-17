@@ -9,16 +9,14 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/guil95/outbox"
-	"github.com/guil95/outbox/kafka"
-	storage "github.com/guil95/outbox/mongo"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
 	ctx := context.Background()
-	mongoStorage := storage.NewMongoStorage(mongoConnection())
-	kafkaProducer := kafka.NewKafkaProducer()
+	mongoStorage := outbox.NewMongoStorage(mongoConnection())
+	kafkaProducer := outbox.NewKafkaProducer()
 
 	go func(str outbox.Storage, ctx context.Context) {
 		for {
