@@ -17,7 +17,7 @@ func NewMongoStorage(db *mongo.Database) Storage {
 
 func (m mongoStorage) ListAllItems(ctx context.Context) ([]Model, error) {
 	cursor, err := m.db.Collection("outbox").
-		Find(ctx, bson.D{{"produced", false}})
+		Find(ctx, bson.D{{"delivered", false}})
 
 	if err != nil {
 		return nil, err
@@ -31,14 +31,14 @@ func (m mongoStorage) ListAllItems(ctx context.Context) ([]Model, error) {
 	return items, nil
 }
 
-func (m mongoStorage) UpdateItemToCheck(ctx context.Context, ids []string) error {
+func (m mongoStorage) UpdateItemToCheck(ctx context.Context, id string) error {
 	_, err := m.
 		db.
 		Collection("outbox").
-		UpdateMany(
+		UpdateOne(
 			ctx,
-			bson.M{"idempotency_id": bson.M{"$in": ids}},
-			bson.D{{"$set", bson.D{{"produced", true}}}},
+			bson.M{"idempotency_id": id},
+			bson.D{{"$set", bson.D{{"delivered", true}}}},
 		)
 
 	return err
@@ -50,7 +50,7 @@ func (m mongoStorage) DeleteCheckedItems(ctx context.Context) error {
 		Collection("outbox").
 		DeleteMany(
 			ctx,
-			bson.D{{"produced", true}},
+			bson.D{{"delivered", true}},
 		)
 
 	return err

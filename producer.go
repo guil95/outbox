@@ -1,5 +1,5 @@
 package outbox
 
 type Producer interface {
-	Produce(items []Model) error
+	Produce(items []Model, deliveredID chan<- string) error
 }

@@ -9,7 +9,7 @@ Available storages:
 - Mysql (in progress)
 
 Available broker/producer:
-- Kafka (in progress)
+- Kafka 
 
 # Usage
 
@@ -32,7 +32,16 @@ Create a collection on mongodb with this fields
 Initialize outbox
 ```
 mongoStorage := mongostorage.NewMongoStorage(mongoConnection())
-kafkaProducer := kafka.NewKafkaProducer()
+kafkaProducer := kafka.NewProducer(kafka.NewProducer(
+		&kafka.ConfigMap{
+			"bootstrap.servers":        "localhost:29092",
+			"delivery.timeout.ms":      600000,
+			"linger.ms":                10000,
+			"message.send.max.retries": 10000000,
+			"batch.num.messages":       1,
+			"enable.idempotence":       true,
+		},
+	))
 
 o := outbox.NewOutbox(mongoStorage, kafkaProducer)
 
@@ -40,3 +49,6 @@ go o.Listen(context.Background())
 ```
 
 In your repository layer do you should remember to use db transaction to save to your app collection/table and outbox.
+
+
+> **It's recommend use the configuration** `batch.num.messages` **with value** `1` **to will don't have problem whit duplicate messages, also validate idempotency_id on consumer**

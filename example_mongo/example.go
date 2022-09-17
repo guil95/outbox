@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/google/uuid"
 	"github.com/guil95/outbox"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -15,24 +15,28 @@ import (
 
 func main() {
 	ctx := context.Background()
+	producer, err := kafkaProducer()
+	if err != nil {
+		panic(err)
+	}
+
 	mongoStorage := outbox.NewMongoStorage(mongoConnection())
-	kafkaProducer := outbox.NewKafkaProducer()
+	newKafkaProducer := outbox.NewKafkaProducer(producer)
 
 	go func(str outbox.Storage, ctx context.Context) {
 		for {
 			_ = str.SaveItem(ctx, outbox.Model{
 				IdempotencyID: uuid.NewString(),
 				Message:       `{"name": "Guilherme"}`,
-				Topic:         "users_ms",
-				Event:         "user_saved",
-				Produced:      false,
+				Topic:         "user_created",
+				Delivered:     false,
 			})
 
-			time.Sleep(time.Second * 2)
+			time.Sleep(time.Second * 3)
 		}
 	}(mongoStorage, ctx)
 
-	ob := outbox.NewOutbox(mongoStorage, kafkaProducer)
+	ob := outbox.NewOutbox(mongoStorage, newKafkaProducer)
 
 	ob.Listen(context.Background())
 }
@@ -50,5 +54,18 @@ func mongoConnection() *mongo.Database {
 		return nil
 	}
 
-	return client.Database(os.Getenv("MONGO_OUTBOX_DB"))
+	return client.Database("app_mongo_db")
+}
+
+func kafkaProducer() (*kafka.Producer, error) {
+	return kafka.NewProducer(
+		&kafka.ConfigMap{
+			"bootstrap.servers":        "localhost:29092",
+			"delivery.timeout.ms":      600000,
+			"linger.ms":                10000,
+			"message.send.max.retries": 10000000,
+			"batch.num.messages":       1,
+			"enable.idempotence":       true,
+		},
+	)
 }

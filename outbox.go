@@ -23,24 +23,34 @@ func (o *outbox) Listen(ctx context.Context) {
 	log.Println("initialize outbox process")
 
 	go o.deleteCheckedItems(ctx)
+
+	itemsFound := make(chan []Model)
+	deliveredChan := make(chan string)
+
+	go func(itemsFound chan []Model, deliveredChan chan string) {
+		for {
+			select {
+			case idempotencyID := <-deliveredChan:
+				o.updateItemToChecked(ctx, idempotencyID)
+			case i := <-itemsFound:
+				if err := o.producer.Produce(i, deliveredChan); err != nil {
+					log.Printf("error to produce message %v", err)
+					continue
+				}
+			}
+		}
+	}(itemsFound, deliveredChan)
+
 	for {
 		items, err := o.storage.ListAllItems(ctx)
-
 		log.Printf("items found %v", items)
-
 		if err != nil {
 			log.Printf("outbox: error deleting checked items %v", err)
 		}
 
-		err = o.producer.Produce(items)
-		if err != nil {
-			log.Printf("error to produce message %v", err)
-			continue
-		}
+		itemsFound <- items
 
-		o.updateItemToChecked(ctx, items)
-
-		time.Sleep(time.Second * 1)
+		time.Sleep(time.Second * 2)
 	}
 }
 
@@ -55,18 +65,8 @@ func (o *outbox) deleteCheckedItems(ctx context.Context) {
 	}
 }
 
-func (o *outbox) updateItemToChecked(ctx context.Context, items []Model) {
-	var ids []string
-
-	for _, item := range items {
-		ids = append(ids, item.IdempotencyID)
-	}
-
-	if len(ids) == 0 {
-		return
-	}
-
-	err := o.storage.UpdateItemToCheck(ctx, ids)
+func (o *outbox) updateItemToChecked(ctx context.Context, idempotencyID string) {
+	err := o.storage.UpdateItemToCheck(ctx, idempotencyID)
 	if err != nil {
 		log.Printf("outbox: error update items %v", err)
 	}

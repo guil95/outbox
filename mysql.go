@@ -19,7 +19,7 @@ func (m mysqlStorage) ListAllItems(ctx context.Context) ([]Model, error) {
 	panic("implement me")
 }
 
-func (m mysqlStorage) UpdateItemToCheck(ctx context.Context, ids []string) error {
+func (m mysqlStorage) UpdateItemToCheck(ctx context.Context, id string) error {
 	//TODO implement me
 	panic("implement me")
 }
