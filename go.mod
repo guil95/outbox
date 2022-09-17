@@ -3,8 +3,9 @@ module github.com/guil95/outbox
 go 1.19
 
 require (
+	github.com/google/uuid v1.3.0
+	github.com/jmoiron/sqlx v1.3.5
 	go.mongodb.org/mongo-driver v1.10.2
-	go.uber.org/zap v1.23.0
 )
 
 require (
