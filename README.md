@@ -23,8 +23,7 @@ Create a collection on mongodb with this fields
     "name": "Guilherme",
     "age": 27
   },
-  "topic": "users",
-  "event": "user_saved",
+  "topic": "user_created",
   "produced": false
 }
 ```
