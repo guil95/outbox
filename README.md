@@ -47,7 +47,7 @@ o := outbox.NewOutbox(mongoStorage, kafkaProducer)
 go o.Listen(context.Background())
 ```
 
-In your repository layer do you should remember to use db transaction to save to your app collection/table and outbox.
+In your storage layer do you should remember to use db transaction to save to your app collection/table and outbox.
 
 
 > **It's recommend use the configuration** `batch.num.messages` **with value** `1` **to will don't have problem with duplicate messages, also validate idempotency_id on consumer**
