@@ -49,5 +49,7 @@ go o.Listen(context.Background())
 
 In your storage layer do you should remember to use db transaction to save to your app collection/table and outbox.
 
+# Example
+Use the docker-compose inside example_mongo to up dependencies and run the example
 
 > **It's recommend use the configuration** `batch.num.messages` **with value** `1` **to will don't have problem with duplicate messages, also validate idempotency_id on consumer**
