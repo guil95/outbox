@@ -20,8 +20,6 @@ func NewOutbox(storage Storage, producer Producer) Outbox {
 }
 
 func (o *outbox) Listen(ctx context.Context) {
-	log.Println("initialize outbox process")
-
 	go o.deleteCheckedItems(ctx)
 
 	itemsFound := make(chan []Model)
@@ -43,7 +41,6 @@ func (o *outbox) Listen(ctx context.Context) {
 
 	for {
 		items, err := o.storage.ListAllItems(ctx)
-		log.Printf("items found %v", items)
 		if err != nil {
 			log.Printf("outbox: error deleting checked items %v", err)
 		}
